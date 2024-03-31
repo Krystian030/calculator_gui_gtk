@@ -1,3 +1,5 @@
+import gi
+gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, Gio, GObject
 from calculator import calculate_expression
 
@@ -58,10 +60,13 @@ class CalculatorWindow(Gtk.Window):
     def on_button_clicked(self, button):
         label = button.get_label()
         if label == '=':
-            result = calculate_expression(self.expression)
-            self.entry.set_text(str(result))
-            self.history_box.add_to_history(f"{self.expression} = {result}")
-            self.expression = str(result)
+            try:
+                result = calculate_expression(self.expression)
+                self.entry.set_text(str(result))
+                self.history_box.add_to_history(f"{self.expression} = {result}")
+                self.expression = str(result)
+            except Exception as e:
+                self.show_error_dialog(str(e))
         else:
             if label == 'C':
                 self.expression = ""
@@ -72,34 +77,43 @@ class CalculatorWindow(Gtk.Window):
                 self.expression += label
             self.entry.set_text(self.expression)
 
+    def show_error_dialog(self, message):
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            modal=True,
+            message_type=Gtk.MessageType.ERROR,
+            buttons=Gtk.ButtonsType.OK,
+            text=message
+        )
+        dialog.connect("response", self.on_dialog_response)
+        dialog.present()
 
+    def on_dialog_response(self, dialog, response_id):
+        dialog.destroy()
+        
 class HistoryWindow(Gtk.Window):
     def __init__(self, history_box):
         Gtk.Window.__init__(self, title="Historia Obliczeń")
 
         self.history_box = history_box
-        self.listbox = Gtk.ListBox() 
-        grid = Gtk.Grid()
-        self.set_child(grid)
-        grid.attach(self.listbox, 0, 0, 1, 1)
-        self.connect("destroy", self.on_destroy)
+        
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        self.set_child(scrolled_window)
 
+        self.textview = Gtk.TextView()
+        self.textview.set_editable(False)  
+        self.textview.set_cursor_visible(False)  
+        scrolled_window.set_child(self.textview)
+        
         self.history_box.connect('history-updated', self.update_history_list)
         self.update_history_list()
 
-    def update_history_list(self, *args):
-        listbox = Gtk.ListBox()
-        self.set_child(listbox)
-        for calculation in self.history_box.get_history():
-            row = Gtk.ListBoxRow()
-            label = Gtk.Label(label=calculation)
-            row.set_child(label)
-            listbox.append(row)
+    def update_history_list(self, *_):
+        history_text = "\n".join(self.history_box.get_history())
+        buffer = self.textview.get_buffer()
+        buffer.set_text(history_text)
             
-    def on_destroy(self, widget):
-        # When the window is closed, hide it instead of destroying it
-        widget.hide()
-
 class AboutWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="O Programie")
@@ -118,8 +132,8 @@ class MenuWindow(Gtk.ApplicationWindow):
         self.history_box = HistoryBox()
 
         self.grid = Gtk.Grid()
-        self.set_child(self.grid)  # Używamy set_child zamiast add
-
+        self.set_child(self.grid)
+    
         button_calculator = Gtk.Button(label="Kalkulator")
         button_calculator.connect("clicked", self.on_calculator_clicked)
         self.grid.attach(button_calculator, 0, 0, 1, 1)
@@ -131,7 +145,7 @@ class MenuWindow(Gtk.ApplicationWindow):
         button_about = Gtk.Button(label="O Programie")
         button_about.connect("clicked", self.on_about_clicked)
         self.grid.attach(button_about, 0, 2, 1, 1)
-
+        
     def on_calculator_clicked(self, button):
         calculator_window = CalculatorWindow(self.history_box)
         calculator_window.present()
