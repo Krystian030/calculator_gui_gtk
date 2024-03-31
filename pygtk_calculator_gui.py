@@ -1,6 +1,7 @@
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GObject
+from calculator import calculate_expression
 
 class HistoryBox(GObject.GObject):    
     __gsignals__ = {
@@ -124,6 +125,10 @@ class AboutWindow(Gtk.Window):
         grid.attach(label, 0, 0, 1, 1)
 
 
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 class MenuWindow(Gtk.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title="Menu")
@@ -132,19 +137,59 @@ class MenuWindow(Gtk.ApplicationWindow):
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
-    
+
+        # Dodanie paska menu
+        menu_bar = Gtk.MenuBar()
+        self.grid.attach(menu_bar, 0, 0, 1, 1)
+
+        menu = Gtk.Menu()
+
+        # Przycisk Program w menu
+        program_menu_item = Gtk.MenuItem(label="Program")
+        program_menu_item.set_submenu(menu)
+
+        calculator_item = Gtk.MenuItem(label="Kalkulator")
+        calculator_item.connect("activate", self.on_calculator_clicked)
+
+        history_item = Gtk.MenuItem(label="Historia")
+        history_item.connect("activate", self.on_history_clicked)
+
+        menu.append(calculator_item)
+        menu.append(history_item)
+
+        # Przycisk O programie w menu
+        about_menu_item = Gtk.MenuItem(label="O Programie")
+        about_menu_item.connect("activate", self.on_about_clicked)
+
+        # Przycisk Wyjście w menu
+        quit_menu_item = Gtk.MenuItem(label="Wyjście")
+        quit_menu_item.connect("activate", self.on_quit_activate)
+
+        menu_bar.append(program_menu_item)
+        menu_bar.append(about_menu_item)
+        menu_bar.append(quit_menu_item)
+
+        # Większy odstęp między menu a przyciskami
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        self.grid.attach(separator, 0, 1, 1, 1)
+
+        # Dodatkowa pusta komórka dla odstępu
+        spacer = Gtk.Label()  # Może być także pusty Gtk.Box lub Gtk.Alignment
+        self.grid.attach(spacer, 0, 2, 1, 1)
+
+        # Przyciski
         button_calculator = Gtk.Button(label="Kalkulator")
         button_calculator.connect("clicked", self.on_calculator_clicked)
-        self.grid.attach(button_calculator, 0, 0, 1, 1)
+        self.grid.attach(button_calculator, 0, 3, 1, 1)
 
         button_history = Gtk.Button(label="Historia Obliczeń")
         button_history.connect("clicked", self.on_history_clicked)
-        self.grid.attach(button_history, 0, 1, 1, 1)
+        self.grid.attach(button_history, 0, 4, 1, 1)
 
         button_about = Gtk.Button(label="O Programie")
         button_about.connect("clicked", self.on_about_clicked)
-        self.grid.attach(button_about, 0, 2, 1, 1)
-        
+        self.grid.attach(button_about, 0, 5, 1, 1)
+
     def on_calculator_clicked(self, button):
         calculator_window = CalculatorWindow(self.history_box)
         calculator_window.show_all()
