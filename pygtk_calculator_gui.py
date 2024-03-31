@@ -1,7 +1,6 @@
 import gi
-gi.require_version('Gtk', '4.0')
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GObject
-from calculator import calculate_expression
 
 class HistoryBox(GObject.GObject):    
     __gsignals__ = {
@@ -28,7 +27,7 @@ class CalculatorWindow(Gtk.Window):
         self.history_box = history_box
 
         grid = Gtk.Grid()
-        self.set_child(grid)
+        self.add(grid)
 
         self.entry = Gtk.Entry()
         self.entry.set_text("0")
@@ -48,8 +47,7 @@ class CalculatorWindow(Gtk.Window):
         row = 0
         col = 0
         for label in buttons:
-            button = Gtk.Button()
-            button.set_label(label)
+            button = Gtk.Button(label=label)
             button.connect("clicked", self.on_button_clicked)
             button_grid.attach(button, col, row, 1, 1)
             col += 1
@@ -86,7 +84,8 @@ class CalculatorWindow(Gtk.Window):
             text=message
         )
         dialog.connect("response", self.on_dialog_response)
-        dialog.present()
+        dialog.run()
+        dialog.destroy()
 
     def on_dialog_response(self, dialog, response_id):
         dialog.destroy()
@@ -99,12 +98,12 @@ class HistoryWindow(Gtk.Window):
         
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        self.set_child(scrolled_window)
+        self.add(scrolled_window)
 
         self.textview = Gtk.TextView()
         self.textview.set_editable(False)  
         self.textview.set_cursor_visible(False)  
-        scrolled_window.set_child(self.textview)
+        scrolled_window.add(self.textview)
         
         self.history_box.connect('history-updated', self.update_history_list)
         self.update_history_list()
@@ -119,7 +118,7 @@ class AboutWindow(Gtk.Window):
         Gtk.Window.__init__(self, title="O Programie")
 
         grid = Gtk.Grid()
-        self.set_child(grid)
+        self.add(grid)
 
         label = Gtk.Label(label="Aplikacja Kalkulator v1.0\nAutor: Twój Autor")
         grid.attach(label, 0, 0, 1, 1)
@@ -132,7 +131,7 @@ class MenuWindow(Gtk.ApplicationWindow):
         self.history_box = HistoryBox()
 
         self.grid = Gtk.Grid()
-        self.set_child(self.grid)
+        self.add(self.grid)
     
         button_calculator = Gtk.Button(label="Kalkulator")
         button_calculator.connect("clicked", self.on_calculator_clicked)
@@ -148,17 +147,19 @@ class MenuWindow(Gtk.ApplicationWindow):
         
     def on_calculator_clicked(self, button):
         calculator_window = CalculatorWindow(self.history_box)
-        calculator_window.present()
+        calculator_window.show_all()
 
     def on_history_clicked(self, button):
         history_window = HistoryWindow(self.history_box)
-        history_window.present()
+        history_window.show_all()
 
     def on_about_clicked(self, button):
         about_window = AboutWindow()
-        about_window.present()
+        about_window.show_all()
 
-        
+    def on_quit_activate(self, button):
+        Gtk.main_quit()
+
 class CalculatorApplication(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="com.example.calculator", flags=Gio.ApplicationFlags.FLAGS_NONE)
@@ -166,9 +167,9 @@ class CalculatorApplication(Gtk.Application):
 
     def on_activate(self, app):
         win = MenuWindow(app)
-        win.present()
+        win.show_all()
 
 
 if __name__ == "__main__":
     app = CalculatorApplication()
-    app.run()
+    app.run(None)
