@@ -252,7 +252,7 @@ class AboutWindow(Gtk.Window):
         vbox.pack_start(self.menu_bar, False, False, 0)
 
         label = Gtk.Label()
-        label.set_markup("<span size='large'><b>Autor:</b></span> Krystian Jandy s184589\n\n<span size='large'><b>Wersja aplikacji:</b></span> 1.0\n\n<span size='large'><b>Opis:</b></span>\nAplikacja kalkulatora jest narzędziem umożliwiającym wygodne wykonywanie podstawowych operacji matematycznych, takich jak dodawanie, odejmowanie, mnożenie i dzielenie, za pomocą prostego i intuicyjnego interfejsu graficznego użytkownika. Oprócz podstawowych funkcji matematycznych, aplikacja umożliwia również przeglądanie historii wykonanych działań, co pozwala użytkownikowi śledzić i analizować poprzednie obliczenia.")
+        label.set_markup("<span size='large'><b>Autor:</b></span> Krystian Jandy s184589\n\n<span size='large'><b>Wersja aplikacji:</b></span> 1.0\n\n<span size='large'><b>Opis:</b></span>\nAplikacja kalkulatora jest narzędziem umożliwiającym wygodne wykonywanie podstawowych operacji matematycznych, takich jak dodawanie, odejmowanie, mnożenie i dzielenie, za pomocą prostego i intuicyjnego interfejsu graficznego użytkownika. Oprócz podstawowych funkcji matematycznych, aplikacja umożliwia również przeglądanie historii wykonanych działań, pozwalając użytkownikowi śledzić i analizować poprzednie obliczenia.")
         label.set_line_wrap(True)
         label.set_padding(20, 20)
         label.set_max_width_chars(50)  # Ograniczenie szerokości labela

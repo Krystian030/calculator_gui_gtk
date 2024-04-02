@@ -1,6 +1,6 @@
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gio, GObject
+from gi.repository import Gtk, Gio, GObject, Gdk
 from calculator import calculate_expression
 
 class HistoryBox(GObject.GObject):    
@@ -21,29 +21,43 @@ class HistoryBox(GObject.GObject):
     
 
 class CalculatorWindow(Gtk.Window):
-    def __init__(self, history_box):
+    def __init__(self, history_box, menu_bar):
         Gtk.Window.__init__(self, title="Kalkulator")
+        self.set_default_size(400, 426)
+
+        self.set_name("calculator-window")
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_path("styles.css")
+
+        context = Gtk.StyleContext()
+        screen = Gdk.Screen.get_default()
+        context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
         self.expression = ""
         self.history_box = history_box
+        self.menu_bar = menu_bar
+
+        self.connect("destroy", self.on_window_destroy)  
 
         grid = Gtk.Grid()
         self.add(grid)
+        
+        grid.attach(self.menu_bar, 0, 0, 1, 1)
 
         self.entry = Gtk.Entry()
         self.entry.set_text("0")
-        grid.attach(self.entry, 0, 0, 1, 1)
+        grid.attach(self.entry, 0, 1, 1, 1)
 
         buttons = [
             '7', '8', '9', '/',
             '4', '5', '6', '*',
             '1', '2', '3', '-',
             '0', '.', '=', '+',
-            '←'  # Backspace button
+            '←' 
         ]
 
         button_grid = Gtk.Grid()
-        grid.attach(button_grid, 0, 1, 1, 1)
+        grid.attach(button_grid, 0, 2, 1, 1)
 
         row = 0
         col = 0
@@ -91,19 +105,29 @@ class CalculatorWindow(Gtk.Window):
     def on_dialog_response(self, dialog, response_id):
         dialog.destroy()
         
+    def on_window_destroy(self, window):
+        window.destroy()
+        
 class HistoryWindow(Gtk.Window):
-    def __init__(self, history_box):
+    def __init__(self, history_box, menu_bar):
         Gtk.Window.__init__(self, title="Historia Obliczeń")
 
         self.history_box = history_box
+        self.menu_bar = menu_bar
+        self.connect("destroy", self.on_window_destroy) 
         
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(vbox)
+
+        vbox.pack_start(self.menu_bar, False, False, 0)  # Dodajemy menu bar
+
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        self.add(scrolled_window)
-
+        vbox.pack_start(scrolled_window, True, True, 0)
+        
         self.textview = Gtk.TextView()
-        self.textview.set_editable(False)  
-        self.textview.set_cursor_visible(False)  
+        self.textview.set_editable(False)
+        self.textview.set_cursor_visible(False)
         scrolled_window.add(self.textview)
         
         self.history_box.connect('history-updated', self.update_history_list)
@@ -113,108 +137,108 @@ class HistoryWindow(Gtk.Window):
         history_text = "\n".join(self.history_box.get_history())
         buffer = self.textview.get_buffer()
         buffer.set_text(history_text)
-            
+    
+    def on_window_destroy(self, window):
+        window.destroy()
+        
 class AboutWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="O Programie")
-
+        self.connect("destroy", self.on_window_destroy) 
+        
         grid = Gtk.Grid()
         self.add(grid)
 
         label = Gtk.Label(label="Aplikacja Kalkulator v1.0\nAutor: Twój Autor")
         grid.attach(label, 0, 0, 1, 1)
 
+    def on_window_destroy(self, window):
+        window.destroy()
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-
-class MenuWindow(Gtk.ApplicationWindow):
-    def __init__(self, app):
-        super().__init__(application=app, title="Menu")
-
-        self.history_box = HistoryBox()
-
-        self.grid = Gtk.Grid()
-        self.add(self.grid)
-
-        # Dodanie paska menu
-        menu_bar = Gtk.MenuBar()
-        self.grid.attach(menu_bar, 0, 0, 1, 1)
-
-        menu = Gtk.Menu()
-
-        # Przycisk Program w menu
-        program_menu_item = Gtk.MenuItem(label="Program")
-        program_menu_item.set_submenu(menu)
-
-        calculator_item = Gtk.MenuItem(label="Kalkulator")
-        calculator_item.connect("activate", self.on_calculator_clicked)
-
-        history_item = Gtk.MenuItem(label="Historia")
-        history_item.connect("activate", self.on_history_clicked)
-
-        menu.append(calculator_item)
-        menu.append(history_item)
-
-        # Przycisk O programie w menu
-        about_menu_item = Gtk.MenuItem(label="O Programie")
-        about_menu_item.connect("activate", self.on_about_clicked)
-
-        # Przycisk Wyjście w menu
-        quit_menu_item = Gtk.MenuItem(label="Wyjście")
-        quit_menu_item.connect("activate", self.on_quit_activate)
-
-        menu_bar.append(program_menu_item)
-        menu_bar.append(about_menu_item)
-        menu_bar.append(quit_menu_item)
-
-        # Większy odstęp między menu a przyciskami
-        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        self.grid.attach(separator, 0, 1, 1, 1)
-
-        # Dodatkowa pusta komórka dla odstępu
-        spacer = Gtk.Label()  # Może być także pusty Gtk.Box lub Gtk.Alignment
-        self.grid.attach(spacer, 0, 2, 1, 1)
-
-        # Przyciski
-        button_calculator = Gtk.Button(label="Kalkulator")
-        button_calculator.connect("clicked", self.on_calculator_clicked)
-        self.grid.attach(button_calculator, 0, 3, 1, 1)
-
-        button_history = Gtk.Button(label="Historia Obliczeń")
-        button_history.connect("clicked", self.on_history_clicked)
-        self.grid.attach(button_history, 0, 4, 1, 1)
-
-        button_about = Gtk.Button(label="O Programie")
-        button_about.connect("clicked", self.on_about_clicked)
-        self.grid.attach(button_about, 0, 5, 1, 1)
-
-    def on_calculator_clicked(self, button):
-        calculator_window = CalculatorWindow(self.history_box)
-        calculator_window.show_all()
-
-    def on_history_clicked(self, button):
-        history_window = HistoryWindow(self.history_box)
-        history_window.show_all()
-
-    def on_about_clicked(self, button):
-        about_window = AboutWindow()
-        about_window.show_all()
-
-    def on_quit_activate(self, button):
-        Gtk.main_quit()
-
+ 
 class CalculatorApplication(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="com.example.calculator", flags=Gio.ApplicationFlags.FLAGS_NONE)
         self.connect("activate", self.on_activate)
+        self.history_box = HistoryBox()
+        self.windows = []  # Lista przechowująca otwarte okna
 
+        
     def on_activate(self, app):
-        win = MenuWindow(app)
+        win = CalculatorWindow(self.history_box, self.build_menu_bar())
+        # win = HistoryWindow(self.history_box, self.menu_bar)
+        self.windows.append(win)  # Dodaj otwarte okno do listy
         win.show_all()
 
+        
+    def build_menu_bar(self):
+        menu_bar = Gtk.MenuBar()
 
+        # Tworzenie sekcji "Application"
+        menu_application = Gtk.Menu()
+        application_menu_item = Gtk.MenuItem(label="Aplikacja")
+        application_menu_item.set_submenu(menu_application)
+
+        # Tworzenie podopcji "Kalkulator" w sekcji "Application"
+        calculator_item = Gtk.MenuItem(label="Kalkulator")
+        calculator_item.connect("activate", self.on_calculator_clicked)
+        menu_application.append(calculator_item)
+
+        # Tworzenie podopcji "Historia" w sekcji "Application"
+        history_item = Gtk.MenuItem(label="Historia")
+        history_item.connect("activate", self.on_history_clicked)
+        menu_application.append(history_item)
+
+        # Dodanie kreski oddzielającej
+        separator = Gtk.SeparatorMenuItem()
+        menu_application.append(separator)
+
+        # Dodanie opcji "Wyjście" w sekcji "Application"
+        quit_item = Gtk.MenuItem(label="Wyjście")
+        quit_item.connect("activate", self.on_quit_activate)
+        menu_application.append(quit_item)
+
+        menu_bar.append(application_menu_item)
+
+        # Tworzenie sekcji "About"
+        menu_about = Gtk.Menu()
+        about_menu_item = Gtk.MenuItem(label="O programie")
+        about_menu_item.set_submenu(menu_about)
+
+        # Tworzenie podopcji "Opis programu" w sekcji "About"
+        program_description_item = Gtk.MenuItem(label="Opis programu")
+        program_description_item.connect("activate", self.on_program_description_clicked)
+        menu_about.append(program_description_item)
+
+        # Tworzenie podopcji "Autor" w sekcji "About"
+        author_item = Gtk.MenuItem(label="Autor")
+        author_item.connect("activate", self.on_author_clicked)
+        menu_about.append(author_item)
+
+        menu_bar.append(about_menu_item)
+        return menu_bar
+    
+    def on_calculator_clicked(self, button):
+        calculator_window = CalculatorWindow(self.history_box, self.build_menu_bar())
+        self.windows.append(calculator_window)  # Dodaj otwarte okno do listy
+        # calculator_window.connect("destroy", self.on_window_closed)  # Dodaj obsługę zamknięcia okna
+        calculator_window.show_all()
+
+    def on_history_clicked(self, button):
+        history_window = HistoryWindow(self.history_box, self.build_menu_bar())
+        self.add_window(history_window)
+        history_window.show_all()
+
+    def on_quit_activate(self, button):
+        Gtk.main_quit()
+
+    def on_program_description_clicked(self, button):
+        pass
+
+    def on_author_clicked(self, button):
+        pass
+    
 if __name__ == "__main__":
     app = CalculatorApplication()
     app.run(None)
+    Gtk.main()
